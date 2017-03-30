@@ -23,10 +23,6 @@ def read_strokes(file_name):
 	with open(file_name) as fout:
 		data = json.load(fout)
 	shutil.copy(file_name, 'testOpenStrokes.txt')
-
-	data_string = json.dumps(data)#just dumps for matrix_myscript.txt here, meaningless
-
-	data = json.loads(data_string)#data_string is end, data never changed
 	return data
  
 def normalize_x_y(strokes_data):
