@@ -9,6 +9,10 @@ import shutil
 from pylab import *
 
 def strokes_to_image(file_input_name):
+	'''
+	input : stoke json file
+	return : narray of image
+	'''
 	strokes_data = read_strokes(file_input_name)
 	n_data = normalize_x_y(strokes_data)
 	im = draw_storke_in_line(n_data)
