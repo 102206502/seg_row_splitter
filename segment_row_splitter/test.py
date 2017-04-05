@@ -135,7 +135,13 @@ def proj_y_axis(im):
 def find_section():
 	pass
 
-def split_row_y_proj():
+def split_row_y_proj(proj):
+	'''
+		record the mightly segment of the document
+		the place between row to row should be blank
+		input: projection onto y axis
+		output: the point on y that should be the section of the handwritting
+	'''
 	tmp_section=[]
 	flag = False
 	for i, j in enumerate(proj, 0):
@@ -150,6 +156,28 @@ def split_row_y_proj():
 			flag=False
 
 	return tmp_section
+
+def find_average_row_height():
+	avg_seg_height=[]
+	fn_section=[]
+
+	for i in range(0,len(tmp_section)-1,2):
+		tmp_seg_height=[]
+		tmp_seg_height.append(tmp_section[i+1]-tmp_section[i])
+		tmp_seg_height.append(i)
+		tmp_seg_height.append(i+1)
+		avg_seg_height.append(tmp_seg_height)
+
+	avg_height_int=0.00000
+
+	for i in range(len(avg_seg_height)):
+		avg_height_int+=avg_seg_height[i][0]
+	avg_height_int/=len(avg_seg_height)
+
+	print avg_seg_height
+	print avg_height_int
+
+	return avg_seg_height
 
 ####################################################################################################
 ### start here ###
@@ -169,4 +197,4 @@ im = imgray.copy()
 
 proj = proj_y_axis(im)
 
-
+section = split_row_y_proj(proj)
