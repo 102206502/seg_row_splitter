@@ -135,8 +135,28 @@ def proj_y_axis(im):
 def find_section():
 	pass
 
+def split_row_y_proj():
+	tmp_section=[]
+	flag = False
+	for i, j in enumerate(proj, 0):
+		if j != 0 and flag==False:
+			tmp_section.append(i)
+			flag=True
+		elif j==0 and flag==True:
+			tmp_section.append(i-1)
+			flag=False
+		elif i==len(proj)-1:
+			tmp_section.append(i)
+			flag=False
+
+	return tmp_section
+
+####################################################################################################
+### start here ###
 fileout = open("matrix_myscript.txt","w+")
 
+# draw the handwritting by strokes, collect the analysis data(left and top point),
+# and write in matrix_myscript.txt when processing
 im = strokes_to_image('Stroke_21.json', fileout)
 
 # cast to color image for opencv
@@ -146,3 +166,7 @@ im_3=im.copy()
 imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 
 im = imgray.copy()
+
+proj = proj_y_axis(im)
+
+
