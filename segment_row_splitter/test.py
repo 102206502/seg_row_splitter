@@ -15,7 +15,7 @@ def strokes_to_image(file_input_name, file_out_strokes_analysis):
 	'''
 	strokes_data = read_strokes(file_input_name)
 	n_data = normalize_x_y(strokes_data)
-	im = draw_storke_in_line(n_data)
+	im = draw_storke_in_line(n_data, file_out_strokes_analysis)
 	return im
 
 
@@ -97,8 +97,8 @@ def draw_storke_in_dot(n_data, boundary):
 
 	return im
 
-def draw_storke_in_line(n_data):
-	boundary = find_boundary(n_data)
+def draw_storke_in_line(n_data, file_out_strokes_analysis):
+	boundary = find_boundary(n_data, file_out_strokes_analysis)
 	
 	im = draw_storke_in_dot(n_data, boundary)
 	
