@@ -132,8 +132,21 @@ def proj_y_axis(im):
 
 	return proj
 
-def find_section():
-	pass
+def find_sgment_section(im, file_out_strokes_analysis):
+	outfile = file_out_strokes_analysis
+	proj = proj_y_axis(im)
+	y_split_points = split_row_y_proj(proj)
+	section = find_hand_write_section(y_split_points)
+	section_y_split_points_with_index = rule_find_power_index(y_split_points, section)
+
+	for i,j in enumerate(section_y_split_points_with_index,0):
+		if i!=len(section_y_split_points_with_index)-1:
+			fileout.write(str(j)+',')
+		else:
+			fileout.write(str(j))
+
+	return section_y_split_points_with_index
+
 
 def split_row_y_proj(proj):
 	'''
@@ -157,7 +170,13 @@ def split_row_y_proj(proj):
 
 	return tmp_section
 
-def find_average_row_height():
+def find_hand_write_section(y_split_points):
+	'''
+		find the handwritting part at y
+		input: row line y points
+		output: the segments of handwritting part
+	'''
+	tmp_section = y_split_points
 	avg_seg_height=[]
 	fn_section=[]
 
@@ -168,16 +187,58 @@ def find_average_row_height():
 		tmp_seg_height.append(i+1)
 		avg_seg_height.append(tmp_seg_height)
 
+	print avg_seg_height
+
+	return avg_seg_height
+
+def find_average_row_height(hand_write_section):
+	'''
+		calculate the average height of handwritting sections
+		input: handwritting sections
+		output: average height
+	'''
+	avg_seg_height = hand_write_section
 	avg_height_int=0.00000
 
 	for i in range(len(avg_seg_height)):
 		avg_height_int+=avg_seg_height[i][0]
 	avg_height_int/=len(avg_seg_height)
-
-	print avg_seg_height
 	print avg_height_int
 
-	return avg_seg_height
+	return avg_height_int
+
+def rule_find_power_index(y_split_points, section):
+	'''
+		revise the handwrittng section
+		combine the index of math power
+		if the section height are smaller than average, it may be an index
+
+		input: row line y points
+		output: revised section
+	'''
+	avg_height_int = find_average_row_height(section)
+	tmp_section = y_split_points
+	fn_section=[]
+
+	fn_section_flag=False #check whether the past section is less than avg_height_int
+	for i in range(len(section)):
+		if (section[i][0]<=avg_height_int-100): #100 is variable
+			fn_section.append(tmp_section[section[i][1]])
+			fn_section_flag=True
+		else:
+			if fn_section_flag==False:
+				fn_section.append(tmp_section[section[i][1]])
+				fn_section.append(tmp_section[section[i][2]])
+			else:
+				fn_section.append(tmp_section[section[i][2]])
+				fn_section_flag=False
+
+	for i in range(len(fn_section)):
+		cv2.line(im,(0,fn_section[i]),(1000,fn_section[i]),(0,0,0),2)
+
+	print fn_section
+
+	return fn_section
 
 ####################################################################################################
 ### start here ###
@@ -195,6 +256,9 @@ imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 
 im = imgray.copy()
 
-proj = proj_y_axis(im)
+segment_section = find_sgment_section(im, fileout)
 
-section = split_row_y_proj(proj)
+# check result
+cv2.imshow('roi',im)
+cv2.waitKey()
+scipy.misc.imsave('im.bmp',im)
