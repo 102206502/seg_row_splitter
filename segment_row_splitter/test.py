@@ -8,7 +8,7 @@ import scipy.misc
 import shutil
 from pylab import *
 
-def strokes_to_image(file_input_name):
+def strokes_to_image(file_input_name, file_out_strokes_analysis):
 	'''
 	input : stoke json file
 	return : narray of image
@@ -28,7 +28,7 @@ def read_strokes(file_name):
 		data = json.load(fout)
 	shutil.copy(file_name, 'testOpenStrokes.txt')
 	return data
- 
+
 def normalize_x_y(strokes_data):
 	'''
 		combine feild x, fx, and y, fy => 
@@ -53,12 +53,15 @@ def normalize_x_y(strokes_data):
 
 	return n_data
 
-def find_boundary(n_data):
-	boundary = {'i_left': 100000, 'i_top': 100000, 'i_right': -1, 'i_down': -1}
+def find_boundary(n_data, file_out_strokes_analysis):
 	'''
 		find the four point boundary of the handwritting document input
 		input: the x,y of strokes
 	'''
+
+	fileout = file_out_strokes_analysis
+
+	boundary = {'i_left': 100000, 'i_top': 100000, 'i_right': -1, 'i_down': -1}
 	for i in range(len(n_data)):
 		for j in range(len(n_data[i])):
 			if boundary['i_left']>n_data[i][j][0]:
@@ -69,6 +72,12 @@ def find_boundary(n_data):
 				boundary['i_right'] = n_data[i][j][0]
 			if boundary['i_down']<n_data[i][j][1]:
 				boundary['i_down'] = n_data[i][j][1]
+	
+	i_left = boundary['i_left']
+	i_top = boundary['i_top']
+
+	fileout.write(str(i_left)+','+str(i_top)+'\n')
+	
 	return boundary
 
 def draw_storke_in_dot(n_data, boundary):
@@ -109,8 +118,26 @@ def draw_storke_in_line(n_data):
 	scipy.misc.imsave('im.bmp',im)
 	return im
 
+def proj_y_axis(im):
+	'''
+	Project the 2D strokes(im) onto 1D y axis
+	input: im narray
+	return: proj array
+	'''
+	proj = np.zeros(len(im))
+	for i in range(len(im)):
+		for j in range(len(im[i])):
+			if im[i][j]!=255:
+				proj[i]=proj[i]+1
 
-im = strokes_to_image('Stroke_21.json')
+	return proj
+
+def find_section():
+	pass
+
+fileout = open("matrix_myscript.txt","w+")
+
+im = strokes_to_image('Stroke_21.json', fileout)
 
 # cast to color image for opencv
 im_2=im.copy()
