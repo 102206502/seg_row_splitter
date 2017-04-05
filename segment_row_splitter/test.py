@@ -137,7 +137,7 @@ def find_section():
 
 def split_row_y_proj(proj):
 	'''
-		record the mightly segment of the document
+		record the possibly y be the segment of the document
 		the place between row to row should be blank
 		input: projection onto y axis
 		output: the point on y that should be the section of the handwritting
