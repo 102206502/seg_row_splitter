@@ -248,17 +248,15 @@ fileout = open("matrix_myscript.txt","w+")
 # and write in matrix_myscript.txt when processing
 im = strokes_to_image('Stroke_21.json', fileout)
 
-# cast to color image for opencv
 im_2=im.copy()
 im_3=im.copy()
 
+# convert im to grayscale image for convenience im => 2D array
 imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
-
 im = imgray.copy()
-
 segment_section = find_sgment_section(im, fileout)
 
-# check result
+# check result: segment section on image
 cv2.imshow('roi',im)
 cv2.waitKey()
 scipy.misc.imsave('im.bmp',im)
