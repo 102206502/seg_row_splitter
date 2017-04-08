@@ -242,13 +242,11 @@ def rule_find_power_index(y_split_points, section):
 
 def bound_words(imgray, section, im):
 	cnt_arr = bound_contours(imgray)
-	im_2, section_retg = draw_contours_bound(im, cnt_arr, section)
+	im_2, section = draw_contours_bound(im, cnt_arr, section)
 	# show contours bounds
 	show_result_image(im_2, 'roi', 'im_2.bmp')
 
-	# deal with overlaping contours of a character such as '='
-	section_retg_fn = bound_rule_overlap(section_retg)
-	im_3, list_retg = draw_charcter_bound(im, section_retg_fn)
+	im_3, list_retg = draw_charcter_bound(im, section)
 
 	return im_3, list_retg
 
@@ -289,8 +287,9 @@ def draw_contours_bound(im, contours_arr, section):
 
 	a=0
 	tmp_roi=[]
-
-	fn_section_retg=[[]for i in range(len(fn_section)/2)] #segmentation word in section the third element 0 x 1 y 2 w 3 h
+	# len(fn_section)/2 lines
+	total_lines = len(fn_section)/2
+	fn_section_retg=[[]for i in range(total_lines)] #segmentation word in section the third element 0 x 1 y 2 w 3 h
 
 	for cnt in arr:
 		x,y,w,h = cnt
@@ -302,6 +301,9 @@ def draw_contours_bound(im, contours_arr, section):
 				fn_section_retg[i/2].append(tmp_listretg)
 
 	print fn_section_retg[0]
+
+	# deal with overlaping contours of a character such as '='
+	bound_rule_overlap(fn_section_retg)
 
 	return im_2, fn_section_retg
 
@@ -317,6 +319,7 @@ def bound_rule_overlap(fn_section_retg):
 		while j < len(fn_section_retg[i])-1:
 			if (fn_section_retg[i][j+1][0]<fn_section_retg[i][j][0]+(fn_section_retg[i][j][2]/2)
 				or fn_section_retg[i][j+1][0]+fn_section_retg[i][j+1][2]<=fn_section_retg[i][j][0]+fn_section_retg[i][j][2]):
+
 				#fixed x
 				#setting y and h
 				if (fn_section_retg[i][j+1][1]<fn_section_retg[i][j][1]):
@@ -331,6 +334,9 @@ def bound_rule_overlap(fn_section_retg):
 				
 				fn_section_retg[i].pop(j+1)
 			else:
+				#if(fn_section_retg[i][j+1][1]+(fn_section_retg[i][j+1][3]/2)<=fn_section_retg[i][j][1]):
+				#	cha_type[i][j+1]=1
+
 				j+=1
 
 	return fn_section_retg
