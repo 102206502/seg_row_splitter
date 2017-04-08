@@ -240,6 +240,133 @@ def rule_find_power_index(y_split_points, section):
 
 	return fn_section
 
+def bound_words(imgray, section, im):
+	cnt_arr = bound_contours(imgray)
+	im_2, section_retg = draw_contours_bound(im, cnt_arr, section)
+	# show contours bounds
+	show_result_image(im_2, 'roi', 'im_2.bmp')
+
+	# deal with overlaping contours of a character such as '='
+	section_retg_fn = bound_rule_overlap(section_retg)
+	im_3, list_retg = draw_charcter_bound(im, section_retg_fn)
+
+	return im_3, list_retg
+
+def bound_contours(imgray):
+	'''
+		bound the contours on image
+		bound is a rectangle
+		input: gray scale image
+		output: contours array
+	'''
+	# read http://docs.opencv.org/3.2.0/d7/d4d/tutorial_py_thresholding.html
+	ret,thresh = cv2.threshold(imgray, 254, 255, cv2.THRESH_BINARY_INV)
+	img,contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	# bound the characters(contours)
+	cnts = sorted([(c, cv2.boundingRect(c)[0]) for c in contours], key=lambda x:x[1])
+	# make a characters bounds list
+	arr=[]
+	for index, (c, _) in enumerate(cnts):
+		(x, y, w, h) = cv2.boundingRect(c)
+		arr.append((x, y, w, h))
+
+	return arr
+
+def draw_contours_bound(im, contours_arr, section):
+	'''
+		draw the bound on an image
+		?????
+		input: image to draw
+		       contours array
+		       section list
+		output: image with characters bounded
+		        section and bound rectangle list(?????)
+	'''
+	im_2 = im
+
+	arr = contours_arr
+	fn_section = section
+
+	a=0
+	tmp_roi=[]
+
+	fn_section_retg=[[]for i in range(len(fn_section)/2)] #segmentation word in section the third element 0 x 1 y 2 w 3 h
+
+	for cnt in arr:
+		x,y,w,h = cnt
+		cv2.rectangle(im_2,(x,y),(x+w,y+h),(200,0,0),1)
+		tmp_listretg=[x,y,w,h]
+		
+		for i in range(0,len(fn_section),2):
+			if(y>=fn_section[i] and y+h-1<=fn_section[i+1]):
+				fn_section_retg[i/2].append(tmp_listretg)
+
+	print fn_section_retg[0]
+
+	return im_2, fn_section_retg
+
+def bound_rule_overlap(fn_section_retg):
+	'''
+		the contours seperated may be stroke belong to the same words
+		the rule find words like '=', overlap rule
+		input: not sure????
+		output: section and bound rectangle list(???????)
+	'''
+	for i in range(len(fn_section_retg)):
+		j=0
+		while j < len(fn_section_retg[i])-1:
+			if (fn_section_retg[i][j+1][0]<fn_section_retg[i][j][0]+(fn_section_retg[i][j][2]/2)
+				or fn_section_retg[i][j+1][0]+fn_section_retg[i][j+1][2]<=fn_section_retg[i][j][0]+fn_section_retg[i][j][2]):
+				#fixed x
+				#setting y and h
+				if (fn_section_retg[i][j+1][1]<fn_section_retg[i][j][1]):
+					fn_section_retg[i][j][3]=fn_section_retg[i][j][1]+fn_section_retg[i][j][3]-fn_section_retg[i][j+1][1]
+					fn_section_retg[i][j][1]=fn_section_retg[i][j+1][1]
+				else:
+					if (fn_section_retg[i][j+1][1]+fn_section_retg[i][j+1][3]>fn_section_retg[i][j][1]+fn_section_retg[i][j][3]):
+						fn_section_retg[i][j][3]=fn_section_retg[i][j+1][1]+fn_section_retg[i][j+1][3]-fn_section_retg[i][j][1]
+				#setting w
+				if (fn_section_retg[i][j+1][0]+fn_section_retg[i][j+1][2]>fn_section_retg[i][j][0]+fn_section_retg[i][j][2]):
+					fn_section_retg[i][j][2]=fn_section_retg[i][j+1][0]+fn_section_retg[i][j+1][2]-fn_section_retg[i][j][0]
+				
+				fn_section_retg[i].pop(j+1)
+			else:
+				j+=1
+
+	return fn_section_retg
+
+def draw_charcter_bound(im, section):
+	'''
+		draw the bound of characters
+		???????
+
+		input: image to draw
+		       section with rectangles bounding each character
+		output: image with bounds
+		        a list of all bounds
+	'''
+	im_3 = im
+	fn_section_retg = section
+
+	listretg=[]
+
+	for i in range(len(fn_section_retg)):
+		for j in range(len(fn_section_retg[i])):
+			listretg.append(fn_section_retg[i][j])
+			x=fn_section_retg[i][j][0]
+			y=fn_section_retg[i][j][1]
+			w=fn_section_retg[i][j][2]
+			h=fn_section_retg[i][j][3]
+			cv2.rectangle(im_3,(x,y),(x+w,y+h),(200,0,0),1)
+	return im_3, listretg
+
+
+def show_result_image(image, window_title, image_file_name):
+	cv2.imshow(window_title, image)
+	cv2.waitKey()
+	scipy.misc.imsave(image_file_name, image)
+	return
+
 ####################################################################################################
 ### start here ###
 fileout = open("matrix_myscript.txt","w+")
@@ -254,9 +381,13 @@ im_3=im.copy()
 # convert im to grayscale image for convenience im => 2D array
 imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 im = imgray.copy()
-segment_section = find_sgment_section(im, fileout)
+segment_section = find_sgment_section(imgray, fileout)
 
 # check result: segment section on image
-cv2.imshow('roi',im)
-cv2.waitKey()
-scipy.misc.imsave('im.bmp',im)
+show_result_image(im, 'roi', 'im.bmp')
+
+# bound the words
+im_bounds, list_retg = bound_words(imgray, segment_section, im_3)
+
+# show characters bounds
+show_result_image(im_bounds, 'roi', 'im_3.bmp')
