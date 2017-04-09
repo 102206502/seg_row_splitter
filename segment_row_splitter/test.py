@@ -241,12 +241,17 @@ def rule_find_power_index(y_split_points, section):
 	return fn_section
 
 def bound_words(imgray, section, im):
+	im_origin = im.copy()
+
 	cnt_arr = bound_contours(imgray)
 	im_2, section = draw_contours_bound(im, cnt_arr, section)
 	# show contours bounds
 	show_result_image(im_2, 'roi', 'im_2.bmp')
 
-	im_3, list_retg = draw_charcter_bound(im, section)
+	# deal with overlaping contours of a character such as '='
+	section = bound_rule_overlap(section)
+
+	im_3, list_retg = draw_charcter_bound(im_origin, section)
 
 	return im_3, list_retg
 
@@ -255,7 +260,7 @@ def bound_contours(imgray):
 		bound the contours on image
 		bound is a rectangle
 		input: gray scale image
-		output: contours array
+		output: contours array sorted by x of rectangles
 	'''
 	# read http://docs.opencv.org/3.2.0/d7/d4d/tutorial_py_thresholding.html
 	ret,thresh = cv2.threshold(imgray, 254, 255, cv2.THRESH_BINARY_INV)
@@ -263,7 +268,7 @@ def bound_contours(imgray):
 	# bound the characters(contours)
 	cnts = sorted([(c, cv2.boundingRect(c)[0]) for c in contours], key=lambda x:x[1])
 
-	# make a characters bounds list
+	# extract the rectangles in cnts
 	arr=[]
 	for index, (c, _) in enumerate(cnts):
 		(x, y, w, h) = cv2.boundingRect(c)
@@ -274,24 +279,22 @@ def bound_contours(imgray):
 def draw_contours_bound(im, contours_arr, section):
 	'''
 		draw the bound on an image
-		?????
+		append the rectangles in contours_arr to each line
 		input: image to draw
 		       contours array
 		       section list
 		output: image with characters bounded
-		        section and bound rectangle list(?????)
+		        bound rectangle list arranged in each x, y
 	'''
 	im_2 = im
 
 	arr = contours_arr
 	fn_section = section
 
-	a=0
-	tmp_roi=[]
-	# len(fn_section)/2 lines
+	# make a empty list with handwritting document lines length
 	total_lines = len(fn_section)/2
 	fn_section_retg=[[]for i in range(total_lines)] #segmentation word in section the third element 0 x 1 y 2 w 3 h
-
+	
 	for cnt in arr:
 		x,y,w,h = cnt
 		cv2.rectangle(im_2,(x,y),(x+w,y+h),(200,0,0),1)
@@ -300,11 +303,6 @@ def draw_contours_bound(im, contours_arr, section):
 		for i in range(0,len(fn_section),2):
 			if(y>=fn_section[i] and y+h-1<=fn_section[i+1]):
 				fn_section_retg[i/2].append(tmp_listretg)
-
-	print fn_section_retg[0]
-
-	# deal with overlaping contours of a character such as '='
-	bound_rule_overlap(fn_section_retg)
 
 	return im_2, fn_section_retg
 
@@ -350,7 +348,7 @@ def draw_charcter_bound(im, section):
 		input: image to draw
 		       section with rectangles bounding each character
 		output: image with bounds
-		        a list of all bounds
+		        a 1D list of all bounds arranged from left to right and from top to botton
 	'''
 	im_3 = im
 	fn_section_retg = section
@@ -365,6 +363,7 @@ def draw_charcter_bound(im, section):
 			w=fn_section_retg[i][j][2]
 			h=fn_section_retg[i][j][3]
 			cv2.rectangle(im_3,(x,y),(x+w,y+h),(200,0,0),1)
+	
 	return im_3, listretg
 
 
