@@ -15,8 +15,8 @@ def strokes_to_image(file_input_name, file_out_strokes_analysis):
 	'''
 	strokes_data = read_strokes(file_input_name)
 	n_data = normalize_x_y(strokes_data)
-	im = draw_storke_in_line(n_data, file_out_strokes_analysis)
-	return im
+	im, boundary = draw_storke_in_line(n_data, file_out_strokes_analysis)
+	return im, n_data, boundary
 
 
 def read_strokes(file_name):
@@ -57,6 +57,7 @@ def find_boundary(n_data, file_out_strokes_analysis):
 	'''
 		find the four point boundary of the handwritting document input
 		input: the x,y of strokes
+		output: boudary of the handwritting document
 	'''
 
 	fileout = file_out_strokes_analysis
@@ -116,7 +117,7 @@ def draw_storke_in_line(n_data, file_out_strokes_analysis):
 		
 
 	scipy.misc.imsave('im.bmp',im)
-	return im
+	return im, boundary
 
 def proj_y_axis(im):
 	'''
@@ -343,7 +344,7 @@ def bound_rule_overlap(fn_section_retg):
 def draw_charcter_bound(im, section):
 	'''
 		draw the bound of characters
-		???????
+		make a 1D bounds list
 
 		input: image to draw
 		       section with rectangles bounding each character
@@ -366,6 +367,48 @@ def draw_charcter_bound(im, section):
 	
 	return im_3, listretg
 
+def classify_strokes_in_characters(bounds_retg, n_data, boudary, section_line):
+	listretg = bounds_retg
+	i_left = boundary['i_left']
+	i_top = boundary['i_top']
+	fn_section = section_line
+
+	cha_arr=[[] for i in range(len(listretg))]
+
+	for l,i in enumerate(listretg):
+		for k,j in enumerate(n_data):
+			if j[0][0]-i_left+1 >= i[1] and j[0][0]-i_left+1 <= i[1]+i[3] and j[0][1]-i_top+1 >= i[0] and j[0][1]-i_top+1 <= i[0]+i[2]:
+				cha_arr[l].append(k)
+
+	cha_arr=sorted(cha_arr)
+
+	for i in range(len(cha_arr)):
+		for j in range(len(fn_section)/2):
+			if (n_data[cha_arr[i][0]][0][0]-i_left>=fn_section[j*2] and n_data[cha_arr[i][0]][0][0]-i_left<=fn_section[j*2+1]):
+				cha_arr[i].insert(0,j)
+				break
+	return cha_arr
+
+def write_strokes_in_characters_time(cha_arr, file_out_strokes_analysis):
+	fileout = file_out_strokes_analysis
+
+	fileout.write('\n')
+	for i,j in enumerate(cha_arr,0):
+		if i!=len(cha_arr)-1:
+			for k,l in enumerate(j,0):
+				if k!=len(j)-1:
+					fileout.write(str(l)+',')
+				else:
+					fileout.write(str(l))
+			fileout.write('\n')
+		else:
+			for k,l in enumerate(j,0):
+				if k!=len(j)-1:
+					fileout.write(str(l)+',')
+				else:
+					fileout.write(str(l))
+
+	return
 
 def show_result_image(image, window_title, image_file_name):
 	cv2.imshow(window_title, image)
@@ -379,7 +422,7 @@ fileout = open("matrix_myscript.txt","w+")
 
 # draw the handwritting by strokes, collect the analysis data(left and top point),
 # and write in matrix_myscript.txt when processing
-im = strokes_to_image('Stroke_21.json', fileout)
+im, n_data, boundary = strokes_to_image('Stroke_21.json', fileout)
 
 im_2=im.copy()
 im_3=im.copy()
@@ -397,3 +440,7 @@ im_bounds, list_retg = bound_words(imgray, segment_section, im_3)
 
 # show characters bounds
 show_result_image(im_bounds, 'roi', 'im_3.bmp')
+
+cha_arr = classify_strokes_in_characters(list_retg, n_data, boundary, segment_section)
+
+write_strokes_in_characters_time(cha_arr, fileout)
