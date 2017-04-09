@@ -262,6 +262,7 @@ def bound_contours(imgray):
 	img,contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	# bound the characters(contours)
 	cnts = sorted([(c, cv2.boundingRect(c)[0]) for c in contours], key=lambda x:x[1])
+
 	# make a characters bounds list
 	arr=[]
 	for index, (c, _) in enumerate(cnts):
