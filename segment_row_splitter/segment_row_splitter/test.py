@@ -301,7 +301,7 @@ def draw_contours_bound(im, contours_arr, section):
 		cv2.rectangle(im_2,(x,y),(x+w,y+h),(200,0,0),1)
 		tmp_listretg=[x,y,w,h]
 		
-		for i in range(0,len(fn_section),2):
+		for i in range(0,len(fn_section)-1,2):
 			if(y>=fn_section[i] and y+h-1<=fn_section[i+1]):
 				fn_section_retg[i/2].append(tmp_listretg)
 
@@ -311,7 +311,8 @@ def bound_rule_overlap(fn_section_retg):
 	'''
 		the contours seperated may be stroke belong to the same words
 		the rule find words like '=', overlap rule
-		input: not sure????
+		input: fn_section[row][col][attributes], 2D list of the retangles. 
+			   attributs : (0 : x, 1 : y, 2 : w, 3 : h)
 		output: section and bound rectangle list(???????)
 	'''
 	for i in range(len(fn_section_retg)):
@@ -411,8 +412,8 @@ def write_strokes_in_characters_time(cha_arr, file_out_strokes_analysis):
 	return
 
 def show_result_image(image, window_title, image_file_name):
-	cv2.imshow(window_title, image)
-	cv2.waitKey()
+	# cv2.imshow(window_title, image)
+	# cv2.waitKey()
 	scipy.misc.imsave(image_file_name, image)
 	return
 
@@ -422,7 +423,7 @@ fileout = open("matrix_myscript.txt","w+")
 
 # draw the handwritting by strokes, collect the analysis data(left and top point),
 # and write in matrix_myscript.txt when processing
-im, n_data, boundary = strokes_to_image('Stroke_21.json', fileout)
+im, n_data, boundary = strokes_to_image('Stroke_34.json', fileout)
 
 im_2=im.copy()
 im_3=im.copy()
