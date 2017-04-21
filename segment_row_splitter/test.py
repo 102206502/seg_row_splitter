@@ -7,6 +7,7 @@ import math
 import scipy.misc
 import shutil
 from pylab import *
+import time
 
 def strokes_to_image(file_input_name, file_out_strokes_analysis):
 	'''
@@ -123,22 +124,39 @@ def proj_y_axis(im):
 	'''
 	Project the 2D strokes(im) onto 1D y axis
 	input: im narray
-	return: proj array
+	return: proj flag array, 1 means not blank, 0 means it may be the space between lines
 	'''
 	proj = np.zeros(len(im))
 	for i in range(len(im)):
 		for j in range(len(im[i])):
 			if im[i][j]!=255:
 				proj[i]=proj[i]+1
+				break;
+				# proj[i]=proj[i]+1
 
 	return proj
 
 def find_sgment_section(im, file_out_strokes_analysis):
+	print '\nstart segmentation:'
+	tStart = time.time()
+
 	outfile = file_out_strokes_analysis
 	proj = proj_y_axis(im)
+	tCurrent = time.time()
+	print 'after proj_y_axis', (tCurrent - tStart)
+
 	y_split_points = split_row_y_proj(proj)
+	tCurrent = time.time()
+	print 'after split_row_y_proj', (tCurrent - tStart)
+
+
 	section = find_hand_write_section(y_split_points)
+	tCurrent = time.time()
+	print 'after find_hand_write_section', (tCurrent - tStart)
+
 	section_y_split_points_with_index = rule_find_power_index(y_split_points, section)
+	tCurrent = time.time()
+	print 'after rule_find_power_index', (tCurrent - tStart)
 
 	for i,j in enumerate(section_y_split_points_with_index,0):
 		if i!=len(section_y_split_points_with_index)-1:
@@ -146,6 +164,8 @@ def find_sgment_section(im, file_out_strokes_analysis):
 		else:
 			fileout.write(str(j))
 
+
+	print 'end segmentation\n'
 	return section_y_split_points_with_index
 
 
@@ -188,8 +208,6 @@ def find_hand_write_section(y_split_points):
 		tmp_seg_height.append(i+1)
 		avg_seg_height.append(tmp_seg_height)
 
-	print avg_seg_height
-
 	return avg_seg_height
 
 def find_average_row_height(hand_write_section):
@@ -204,7 +222,6 @@ def find_average_row_height(hand_write_section):
 	for i in range(len(avg_seg_height)):
 		avg_height_int+=avg_seg_height[i][0]
 	avg_height_int/=len(avg_seg_height)
-	print avg_height_int
 
 	return avg_height_int
 
@@ -237,22 +254,26 @@ def rule_find_power_index(y_split_points, section):
 	for i in range(len(fn_section)):
 		cv2.line(im,(0,fn_section[i]),(1000,fn_section[i]),(0,0,0),2)
 
-	print fn_section
-
 	return fn_section
 
 def bound_words(imgray, section, im):
+
 	im_origin = im.copy()
 
 	cnt_arr = bound_contours(imgray)
+
 	im_2, section = draw_contours_bound(im, cnt_arr, section)
+
+
 	# show contours bounds
 	show_result_image(im_2, 'roi', 'im_2.bmp')
 
 	# deal with overlaping contours of a character such as '='
 	section = bound_rule_overlap(section)
 
+
 	im_3, list_retg = draw_charcter_bound(im_origin, section)
+
 
 	return im_3, list_retg
 
@@ -302,6 +323,8 @@ def draw_contours_bound(im, contours_arr, section):
 		tmp_listretg=[x,y,w,h]
 		
 		for i in range(0,len(fn_section),2):
+			if(i >= len(fn_section) - 1):
+				break;
 			if(y>=fn_section[i] and y+h-1<=fn_section[i+1]):
 				fn_section_retg[i/2].append(tmp_listretg)
 
@@ -390,6 +413,7 @@ def classify_strokes_in_characters(bounds_retg, n_data, boudary, section_line):
 	return cha_arr
 
 def write_strokes_in_characters_time(cha_arr, file_out_strokes_analysis):
+
 	fileout = file_out_strokes_analysis
 
 	fileout.write('\n')
@@ -411,18 +435,22 @@ def write_strokes_in_characters_time(cha_arr, file_out_strokes_analysis):
 	return
 
 def show_result_image(image, window_title, image_file_name):
-	cv2.imshow(window_title, image)
-	cv2.waitKey()
+	# cv2.imshow(window_title, image)
+	# cv2.waitKey()
 	scipy.misc.imsave(image_file_name, image)
 	return
 
 ####################################################################################################
 ### start here ###
+tStart = time.time()
+
 fileout = open("matrix_myscript.txt","w+")
 
+print 'after open file', (time.time() - tStart)
 # draw the handwritting by strokes, collect the analysis data(left and top point),
 # and write in matrix_myscript.txt when processing
-im, n_data, boundary = strokes_to_image('Stroke_21.json', fileout)
+im, n_data, boundary = strokes_to_image('Stroke_31.json', fileout)
+print 'after stroke to image', (time.time() - tStart)
 
 im_2=im.copy()
 im_3=im.copy()
@@ -431,16 +459,19 @@ im_3=im.copy()
 imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 im = imgray.copy()
 segment_section = find_sgment_section(imgray, fileout)
+print 'after find segment section', (time.time() - tStart)
 
 # check result: segment section on image
 show_result_image(im, 'roi', 'im.bmp')
 
 # bound the words
 im_bounds, list_retg = bound_words(imgray, segment_section, im_3)
+print 'after bound words', (time.time() - tStart)
 
 # show characters bounds
 show_result_image(im_bounds, 'roi', 'im_3.bmp')
 
 cha_arr = classify_strokes_in_characters(list_retg, n_data, boundary, segment_section)
+print 'after classify strokes in characters', (time.time() - tStart)
 
 write_strokes_in_characters_time(cha_arr, fileout)
