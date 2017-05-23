@@ -149,6 +149,35 @@ def sort_conts_y(contours):
 
 	return arr
 
+def find_sgment_section(im, file_out_strokes_analysis):
+	fileout = file_out_strokes_analysis
+	contours = bound_contours(imgray)
+	contours_regs = sort_conts_y(contours)
+	section_regs, y_split_points = find_section_by_conts(contours_regs)
+
+	section = find_hand_write_section(y_split_points)
+	y_split_points = rule_find_power_index(y_split_points, section)
+	# print 'after sort by x' 
+	# for line in range(len(section_regs)):
+	# 	for reg in range(len(section_regs[line])):
+	# 		print 'reg[', line, '][', reg, ']', section_regs[line][reg]
+
+
+	# print 'y points of row line', y_split_points
+	im = draw_row_lines(im, y_split_points)
+	show_result_image(im, 'im', 'im.bmp')
+
+	section_regs = bound_rule_overlap(section_regs)
+
+	for i,j in enumerate(y_split_points,0):
+			if i!=len(y_split_points)-1:
+				fileout.write(str(j)+',')
+			else:
+				fileout.write(str(j))
+
+
+	return y_split_points, section_regs, contours_regs
+
 def find_section_by_conts(cnt_regs):
 	'''
 	find section by contours, cast tuple of rectangle to list
@@ -228,6 +257,86 @@ def find_section_by_conts(cnt_regs):
 		y_split_points.append(lower_bound)
 	
 	return section_regs, y_split_points
+
+def find_hand_write_section(y_split_points):
+	'''
+		find the handwritting part at y
+		input: 
+			y_split_points : 1D int list
+			row line y points
+		output: 
+			avg_seg_height : 2D int list
+				the segments of handwritting part
+				[[upper bound, lower bound],...(each line)] is the format
+	'''
+	tmp_section = y_split_points
+	avg_seg_height=[]
+	fn_section=[]
+
+	for i in range(0,len(tmp_section)-1,2):
+		tmp_seg_height=[]
+		tmp_seg_height.append(tmp_section[i+1]-tmp_section[i])
+		tmp_seg_height.append(i)
+		tmp_seg_height.append(i+1)
+		avg_seg_height.append(tmp_seg_height)
+
+	print avg_seg_height
+
+	return avg_seg_height
+
+def find_average_row_height(hand_write_section):
+	'''
+		calculate the average height of handwritting sections
+		input: 2D int list
+				the segments of handwritting part
+				[[upper bound, lower bound],...(for each line)] is the format
+		output: 
+			avg_height_int : int
+				average height
+	'''
+	avg_seg_height = hand_write_section
+	avg_height_int=0.00000
+
+	for i in range(len(avg_seg_height)):
+		avg_height_int+=avg_seg_height[i][0]
+	avg_height_int/=len(avg_seg_height)
+	print avg_height_int
+
+	return avg_height_int
+
+def rule_find_power_index(y_split_points, section):
+	'''
+		revise the handwrittng section
+		combine the index of math power
+		if the section height are smaller than average, it may be an index
+		input: 
+			y_split_points : 1D int list
+				row line y points
+			section : 
+		output: 
+			fn_section :1D int list
+				row line y pointsrevised section
+	'''
+	avg_height_int = find_average_row_height(section)
+	tmp_section = y_split_points
+	fn_section=[]
+
+	fn_section_flag=False #check whether the past section is less than avg_height_int
+	for i in range(len(section)):
+		if (section[i][0]<=avg_height_int-100): #100 is variable
+			fn_section.append(tmp_section[section[i][1]])
+			fn_section_flag=True
+		else:
+			if fn_section_flag==False:
+				fn_section.append(tmp_section[section[i][1]])
+				fn_section.append(tmp_section[section[i][2]])
+			else:
+				fn_section.append(tmp_section[section[i][2]])
+				fn_section_flag=False
+
+	print fn_section
+
+	return fn_section
 
 def draw_contours_bound(im, contours_arr, section):
 	'''
@@ -404,26 +513,7 @@ im_3=im.copy()
 imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 im = imgray.copy()
 
-contours = bound_contours(imgray)
-contours_regs = sort_conts_y(contours)
-section_regs, y_split_points = find_section_by_conts(contours_regs)
-# print 'after sort by x' 
-# for line in range(len(section_regs)):
-# 	for reg in range(len(section_regs[line])):
-# 		print 'reg[', line, '][', reg, ']', section_regs[line][reg]
-
-
-# print 'y points of row line', y_split_points
-im = draw_row_lines(im, y_split_points)
-show_result_image(im, 'im', 'im.bmp')
-
-section_regs = bound_rule_overlap(section_regs)
-
-for i,j in enumerate(y_split_points,0):
-		if i!=len(y_split_points)-1:
-			fileout.write(str(j)+',')
-		else:
-			fileout.write(str(j))
+y_split_points, section_regs, contours_regs = find_sgment_section(im, fileout)
 
 im_2 = draw_contours_bound(im_2, contours_regs, y_split_points)
 show_result_image(im_2, 'im 2', 'im_2.bmp')
