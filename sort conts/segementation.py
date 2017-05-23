@@ -214,7 +214,8 @@ def find_section_by_conts(cnt_regs):
 			upper_bound = reg[1]
 			lower_bound = upper_bound + reg[3]
 
-		section_regs = sort_conts_x(section_regs)
+	
+	section_regs = sort_conts_x(section_regs)
 
 	return section_regs, y_split_points
 
@@ -400,13 +401,14 @@ im = imgray.copy()
 contours = bound_contours(imgray)
 contours_regs = sort_conts_y(contours)
 section_regs, y_split_points = find_section_by_conts(contours_regs)
+print 'after sort by x' 
 for line in range(len(section_regs)):
 	for reg in range(len(section_regs[line])):
 		print 'reg[', line, '][', reg, ']', section_regs[line][reg]
 
 
 print 'y points of row line', y_split_points
-# section_regs = bound_rule_overlap(section_regs)
+section_regs = bound_rule_overlap(section_regs)
 
 for i,j in enumerate(y_split_points,0):
 		if i!=len(y_split_points)-1:
