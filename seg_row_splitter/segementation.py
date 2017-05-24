@@ -323,18 +323,19 @@ def rule_find_power_index(y_split_points, section):
 
 	fn_section_flag=False #check whether the past section is less than avg_height_int
 	for i in range(len(section)):
-		if (section[i][0]<=avg_height_int-100): #100 is variable
-			fn_section.append(tmp_section[section[i][1]])
-			fn_section_flag=True
-		else:
-			if fn_section_flag==False:
-				fn_section.append(tmp_section[section[i][1]])
-				fn_section.append(tmp_section[section[i][2]])
+		if i+1<len(y_split_points):
+			if fn_section_flag:
+				fn_section.append(y_split_points[section[i][2]])
+				fn_section_flag = False
 			else:
-				fn_section.append(tmp_section[section[i][2]])
-				fn_section_flag=False
+				fn_section.append(y_split_points[section[i][1]])
+				if (section[i][0]<=avg_height_int-100):
+					if (y_split_points[section[i][1]+1]-y_split_points[section[i][1]] < 100):
+						fn_section_flag = True
+					else:
+						fn_section.append(y_split_points[section[i][2]])
 
-	print fn_section
+	print 'revised y_split_points:',fn_section
 
 	return fn_section
 
