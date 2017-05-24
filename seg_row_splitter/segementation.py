@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import io
 import numpy as np
@@ -142,7 +143,7 @@ def sort_conts_y(contours):
 		(x, y, w, h) = cv2.boundingRect(c)
 		arr.append((x, y, w, h))
 	
-	arr = sorted(arr, key = lambda x : x[1])
+	arr = sorted(arr, key = itemgetter(1))
 
 	# for i in range(len(arr)):
 	# 	print 'arr[',i,']', arr[i]
@@ -180,41 +181,41 @@ def find_sgment_section(im, file_out_strokes_analysis):
 
 def find_section_by_conts(cnt_regs):
 	'''
-	find section by contours, cast tuple of rectangle to list
-	input : 
-		cnt_regs : 4 elements tuple list
-			the rectangles of contours sorted by y
-	output : 
-		section rectangles : list of rectangle list
-		y spilt points : int list
+		find section by contours, cast tuple of rectangle to list
+		input : 
+			cnt_regs : 4 elements tuple list
+				the rectangles of contours sorted by y
+		output : 
+			section rectangles : list of rectangle list
+			y spilt points : int list
 
-	pseudocode 
-	-----------
-	# upper bound = y of cnt_regs
-	# lower bound = y + h of cnt_regs
-	# for reg in cnt_regs
-	# 	x = x of reg
-	# 	y = y of reg
-	# 	w = w of reg
-	# 	h = h of reg
-	# 	if current line list is empty(just after appended)
-	# 		append reg in current line list
-	# 		update upper bound
-	# 		update lower bound 
-	# 	elif y <= lower bound
-	# 		append reg in current line list
-	# 		if y + h > lower bound
-	# 			lower bound = y + h
-	# 	else
-	# 		sort current line list by x
-	# 		append current line list to section_regs
-	# 		record the upper bound and lower bound as y split point
-	# 		current line list = []
-	# if current line is not empty
-	# 	sort current line list by x
-	# 	append current line list to section_regs
-	# 
-	# 
+		pseudocode 
+		-----------
+		# upper bound = y of cnt_regs
+		# lower bound = y + h of cnt_regs
+		# for reg in cnt_regs
+		# 	x = x of reg
+		# 	y = y of reg
+		# 	w = w of reg
+		# 	h = h of reg
+		# 	if current line list is empty(just after appended)
+		# 		append reg in current line list
+		# 		update upper bound
+		# 		update lower bound 
+		# 	elif y <= lower bound
+		# 		append reg in current line list
+		# 		if y + h > lower bound
+		# 			lower bound = y + h
+		# 	else
+		# 		sort current line list by x
+		# 		append current line list to section_regs
+		# 		record the upper bound and lower bound as y split point
+		# 		current line list = []
+		# if current line is not empty
+		# 	sort current line list by x
+		# 	append current line list to section_regs
+		# 
+		# 
 	'''
 	upper_bound = 0
 	lower_bound = 0
@@ -318,7 +319,6 @@ def rule_find_power_index(y_split_points, section):
 				row line y pointsrevised section
 	'''
 	avg_height_int = find_average_row_height(section)
-	tmp_section = y_split_points
 	fn_section=[]
 
 	fn_section_flag=False #check whether the past section is less than avg_height_int
@@ -329,11 +329,10 @@ def rule_find_power_index(y_split_points, section):
 				fn_section_flag = False
 			else:
 				fn_section.append(y_split_points[section[i][1]])
-				if (section[i][0]<=avg_height_int-100):
-					if (y_split_points[section[i][1]+1]-y_split_points[section[i][1]] < 100):
-						fn_section_flag = True
-					else:
-						fn_section.append(y_split_points[section[i][2]])
+				if (section[i][0]<=avg_height_int-100) and (y_split_points[section[i][1]+1]-y_split_points[section[i][1]] < 100):
+					fn_section_flag = True
+				else:
+					fn_section.append(y_split_points[section[i][2]])
 
 	print 'revised y_split_points:',fn_section
 
@@ -442,7 +441,20 @@ def draw_charcter_bound(im, section):
 	return im_3
 
 def classify_strokes_in_characters(bounds_retg, n_data, boudary, section_line):
-	listretg = bounds_retg
+	'''
+		掃描所有筆畫，對照文字矩形邊界，歸類屬於各邊界內的筆畫
+		input:
+			bounds_retg : 3D int list
+				2D rectangles in [x, y, w,h] format
+			n_data : 3D narray of stoke x, y
+
+	'''
+	listretg = []
+	for retgs in bounds_retg:
+		listretg += retgs
+
+	listretg = sorted(listretg, key = itemgetter(0))
+
 	i_left = boundary['i_left']
 	i_top = boundary['i_top']
 	fn_section = section_line
@@ -522,8 +534,6 @@ show_result_image(im_2, 'im 2', 'im_2.bmp')
 im_3 = draw_charcter_bound(im_3, section_regs)
 show_result_image(im_3, 'im 3', 'im_3.bmp')
 
-contours_regs = sorted(contours_regs, key = itemgetter(0))
-
-cha_arr = classify_strokes_in_characters(contours_regs, n_data, boundary, y_split_points)
+cha_arr = classify_strokes_in_characters(section_regs, n_data, boundary, y_split_points)
 
 write_strokes_in_characters_time(cha_arr, fileout)
