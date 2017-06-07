@@ -460,19 +460,21 @@ def classify_strokes_in_characters(bounds_retg, n_data, boudary, section_line):
 	fn_section = section_line
 
 	cha_arr=[[] for i in range(len(listretg))]
-
-	for l,i in enumerate(listretg):
-		for k,j in enumerate(n_data):
-			if j[0][0]-i_left+1 >= i[1] and j[0][0]-i_left+1 <= i[1]+i[3] and j[0][1]-i_top+1 >= i[0] and j[0][1]-i_top+1 <= i[0]+i[2]:
-				cha_arr[l].append(k)
+	# append cha_arr if the (x,y) in char belongs to the rectangle 
+	for i,retg in enumerate(listretg):
+		for j,xy_data in enumerate(n_data):
+			if (xy_data[0][0]-i_left+1 >= retg[1] 
+				and xy_data[0][0]-i_left+1 <= retg[1]+retg[3] 
+				and xy_data[0][1]-i_top+1 >= retg[0] 
+				and xy_data[0][1]-i_top+1 <= retg[0]+retg[2]):
+				cha_arr[i].append(j)
 
 	cha_arr=sorted(cha_arr)
 
 	for i in range(len(cha_arr)):
 		for j in range(len(fn_section)/2):
-			# if i < len(cha_arr[0]) and i > 0:
-			# 	if cha_arr[i][0] < len(n_data) and j*2+1 < len(fn_section):
-			if (n_data[cha_arr[i][0]][0][0]-i_left>=fn_section[j*2] and n_data[cha_arr[i][0]][0][0]-i_left<=fn_section[j*2+1]):
+			if (n_data[cha_arr[i][0]][0][0]-i_left>=fn_section[j*2] 
+				and n_data[cha_arr[i][0]][0][0]-i_left<=fn_section[j*2+1]):
 				cha_arr[i].insert(0,j)
 				break
 			
