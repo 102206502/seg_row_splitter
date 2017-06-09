@@ -37,6 +37,14 @@ def normalize_x_y(strokes_data):
 		new x = x*100 + fx, 
 		new y = y*100 + fy
 		for opencv
+
+		input : 
+			strokes_data : 3D dictionary json file
+		output :
+			n_data : 3D int list
+				normalized (x, y) of stroke 
+				format is 'n_data[strokes_index][stroke_index][x or y]'
+
 	'''
 	data = strokes_data
 	n_data=[]
@@ -90,6 +98,7 @@ def draw_storke_in_dot(n_data, boundary):
 	pre_data = np.full((t_x,t_y),255,dtype=np.int16)
 
 	for i in range(len(n_data)):
+		#print 'n_data[][][0], n_data[][][1]:', n_data[i][0][0]-boundary['i_left'], n_data[i][0][1]-boundary['i_top']
 		for j in range(len(n_data[i])):
 			c_x = n_data[i][j][0]
 			c_y = n_data[i][j][1]
@@ -462,22 +471,29 @@ def classify_strokes_in_characters(bounds_retg, n_data, boudary, section_line):
 	cha_arr=[[] for i in range(len(listretg))]
 	# append cha_arr if the (x,y) in char belongs to the rectangle 
 	for i,retg in enumerate(listretg):
-		for j,xy_data in enumerate(n_data):
-			if (xy_data[0][0]-i_left+1 >= retg[1] 
-				and xy_data[0][0]-i_left+1 <= retg[1]+retg[3] 
-				and xy_data[0][1]-i_top+1 >= retg[0] 
-				and xy_data[0][1]-i_top+1 <= retg[0]+retg[2]):
+		for j,strokes in enumerate(n_data):
+			if (strokes[0][0]-i_left+1 >= retg[1] 
+				and strokes[0][0]-i_left+1 <= retg[1]+retg[3] 
+				and strokes[0][1]-i_top+1 >= retg[0] 
+				and strokes[0][1]-i_top+1 <= retg[0]+retg[2]):
 				cha_arr[i].append(j)
 
 	cha_arr=sorted(cha_arr)
 
 	for i in range(len(cha_arr)):
 		for j in range(len(fn_section)/2):
-			if (n_data[cha_arr[i][0]][0][0]-i_left>=fn_section[j*2] 
-				and n_data[cha_arr[i][0]][0][0]-i_left<=fn_section[j*2+1]):
+			first_strokes_idx = cha_arr[i][0]
+			x = n_data[first_strokes_idx][0][0]-i_left+1
+			y = n_data[first_strokes_idx][0][1]-i_top+1
+			upper_bound = fn_section[j*2]
+			lower_bound = fn_section[j*2+1]
+			# 確認該方框區域筆畫是屬於哪行 註：i_top 其實是 i_left以此類推
+			if (x>=upper_bound and x<=lower_bound):
+			#if (y>=upper_bound and y<=lower_bound):
 				cha_arr[i].insert(0,j)
 				break
-			
+	
+
 	return cha_arr
 
 def write_strokes_in_characters_time(cha_arr, file_out_strokes_analysis):
@@ -485,20 +501,20 @@ def write_strokes_in_characters_time(cha_arr, file_out_strokes_analysis):
 	fileout = file_out_strokes_analysis
 
 	fileout.write('\n')
-	for i,j in enumerate(cha_arr,0):
+	for i,cha in enumerate(cha_arr,0):
 		if i!=len(cha_arr)-1:
-			for k,l in enumerate(j,0):
-				if k!=len(j)-1:
-					fileout.write(str(l)+',')
+			for j,stroke_num in enumerate(cha,0):
+				if j!=len(cha)-1:
+					fileout.write(str(stroke_num)+',')
 				else:
-					fileout.write(str(l))
+					fileout.write(str(stroke_num))
 			fileout.write('\n')
 		else:
-			for k,l in enumerate(j,0):
-				if k!=len(j)-1:
-					fileout.write(str(l)+',')
+			for j,stroke_num in enumerate(cha,0):
+				if j!=len(cha)-1:
+					fileout.write(str(stroke_num)+',')
 				else:
-					fileout.write(str(l))
+					fileout.write(str(stroke_num))
 
 	return
 
