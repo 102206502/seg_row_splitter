@@ -233,7 +233,7 @@ def find_section_by_conts(cnt_regs):
 	current_section_regs = []
 	y_split_points = []
 
-	print 'number of regs before find_section_by_conts', len(cnt_regs)
+	print('number of regs before find_section_by_conts', len(cnt_regs))
 
 	for reg in cnt_regs:
 		x = reg[0]
@@ -290,7 +290,7 @@ def find_hand_write_section(y_split_points):
 		tmp_seg_height.append(i+1)
 		avg_seg_height.append(tmp_seg_height)
 
-	print avg_seg_height
+	print (avg_seg_height)
 
 	return avg_seg_height
 
@@ -310,7 +310,7 @@ def find_average_row_height(hand_write_section):
 	for i in range(len(avg_seg_height)):
 		avg_height_int+=avg_seg_height[i][0]
 	avg_height_int/=len(avg_seg_height)
-	print avg_height_int
+	print(avg_height_int)
 
 	return avg_height_int
 
@@ -343,7 +343,7 @@ def rule_find_power_index(y_split_points, section):
 				else:
 					fn_section.append(y_split_points[section[i][2]])
 
-	print 'revised y_split_points:',fn_section
+	print('revised y_split_points:',fn_section)
 
 	return fn_section
 
@@ -363,11 +363,11 @@ def draw_contours_bound(im, contours_arr, section):
 
 	arr = contours_arr
 	fn_section = section
-	print 'the segment when draw_contours_bound', section
+	print('the segment when draw_contours_bound', section)
 
 	# make a empty list with handwritting document lines length
 	total_lines = len(fn_section)/2
-	fn_section_retg=[[]for i in range(total_lines)] #segmentation word in section the third element 0 x 1 y 2 w 3 h
+	fn_section_retg=[[]for i in range(int(total_lines))] #segmentation word in section the third element 0 x 1 y 2 w 3 h
 	
 	for cnt in arr:
 		x,y,w,h = cnt
@@ -481,7 +481,7 @@ def classify_strokes_in_characters(bounds_retg, n_data, boudary, section_line):
 	cha_arr=sorted(cha_arr)
 
 	for i in range(len(cha_arr)):
-		for j in range(len(fn_section)/2):
+		for j in range(int(len(fn_section)/2)):
 			first_strokes_idx = cha_arr[i][0]
 			x = n_data[first_strokes_idx][0][0]-i_left+1
 			y = n_data[first_strokes_idx][0][1]-i_top+1
